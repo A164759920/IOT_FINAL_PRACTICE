@@ -1,3 +1,4 @@
 NodeServer/node_modules
 Python/__pycache__
 Python/.idea
+Python/test.log
