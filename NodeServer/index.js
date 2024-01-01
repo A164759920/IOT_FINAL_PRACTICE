@@ -71,84 +71,84 @@ webSocketServer.on("connection", (ws, req) => {
     /**
      * @description : API识别解决方案
      */
-    // if (hostname == "python" && func == "result") {
-    //   // 接收到了python的回传数据
-    //   console.log("来了");
-    //   if (OCR_MUTEX == "OFF") {
-    //     OCR_MUTEX = "ON";
-    //     const client = new OcrClient(clientConfig);
-    //     let ImageBase64 = data.pic;
-    //     const params = {
-    //       ImageBase64,
-    //     };
-    //     // TODO：学号条件判断
-    //     client.GeneralHandwritingOCR(params).then(
-    //       (data) => {
-    //         const scores = [];
-    //         const over100Scores = [];
-    //         let scoreSum = 0;
-    //         console.log(data);
-    //         data.TextDetections.forEach((item) => {
-    //           if (/^\d+$/.test(item.DetectedText)) {
-    //             const score = parseInt(item.DetectedText);
-    //             if (score <= 100) {
-    //               scores.push(score);
-    //               scoreSum = scoreSum + score;
-    //             } else {
-    //               over100Scores.push(score);
-    //             }
-    //           }
-    //         });
-    //         console.log(scores); // 输出小于等于100的纯数字数组
-    //         console.log(over100Scores); // 输出大于100的纯数字数组
-    //         const _obj = {
-    //           hostname,
-    //           func,
-    //           data: {
-    //             pic: ImageBase64,
-    //             scores,
-    //             stuID: over100Scores[0],
-    //             scoresLen: scores.length,
-    //             scoreSum,
-    //           },
-    //         };
-    //         for (const client of connectedClients) {
-    //           client.send(JSON.stringify(_obj));
-    //         }
-    //       },
-    //       (err) => {
-    //         console.error("error", err);
-    //       }
-    //     );
-    //   } else {
-    //     console.log("请先确认上一次识别结果...");
-    //   }
-    //   // // 将 Base64 图片数据转换为 Buffer 对象
-    //   // const buffer = Buffer.from(imageData, "base64");
+    if (hostname == "python" && func == "result") {
+      // 接收到了python的回传数据
+      console.log("来了");
+      if (OCR_MUTEX == "OFF") {
+        OCR_MUTEX = "ON";
+        const client = new OcrClient(clientConfig);
+        let ImageBase64 = data.pic;
+        const params = {
+          ImageBase64,
+        };
+        // TODO：学号条件判断
+        client.GeneralHandwritingOCR(params).then(
+          (data) => {
+            const scores = [];
+            const over100Scores = [];
+            let scoreSum = 0;
+            console.log(data);
+            data.TextDetections.forEach((item) => {
+              if (/^\d+$/.test(item.DetectedText)) {
+                const score = parseInt(item.DetectedText);
+                if (score <= 100) {
+                  scores.push(score);
+                  scoreSum = scoreSum + score;
+                } else {
+                  over100Scores.push(score);
+                }
+              }
+            });
+            console.log(scores); // 输出小于等于100的纯数字数组
+            console.log(over100Scores); // 输出大于100的纯数字数组
+            const _obj = {
+              hostname,
+              func,
+              data: {
+                pic: ImageBase64,
+                scores,
+                stuID: over100Scores[0],
+                scoresLen: scores.length,
+                scoreSum,
+              },
+            };
+            for (const client of connectedClients) {
+              client.send(JSON.stringify(_obj));
+            }
+          },
+          (err) => {
+            console.error("error", err);
+          }
+        );
+      } else {
+        console.log("请先确认上一次识别结果...");
+      }
+      // // 将 Base64 图片数据转换为 Buffer 对象
+      // const buffer = Buffer.from(imageData, "base64");
 
-    //   // // 将 Buffer 对象写入本地文件
+      // // 将 Buffer 对象写入本地文件
 
-    //   // fs.writeFile(`${Date.now()}.jpg`, buffer, (err) => {
-    //   //   if (err) {
-    //   //     console.error("Error writing file:", err);
-    //   //   } else {
-    //   //     console.log("image.jpg has been saved successfully.");
-    //   //   }
-    //   // });
-    // }
-    // if (hostname == "vue" && func == "save") {
-    //   // 用户已确认信息准确，保存数据
-    //   const { stuID, scores, scoreLen, scoreSum } = data;
-    //   console.log("已收到确认数据", stuID, scores, scoreLen, scoreSum);
-    //   // 若save成功，返回给前端确认
-    //   OCR_MUTEX = "OFF";
-    //   const _obj = {
-    //     hostname: "vue",
-    //     func: "saveOK",
-    //     data: 0,
-    //   };
-    //   ws.send(JSON.stringify(_obj));
-    // }
+      // fs.writeFile(`${Date.now()}.jpg`, buffer, (err) => {
+      //   if (err) {
+      //     console.error("Error writing file:", err);
+      //   } else {
+      //     console.log("image.jpg has been saved successfully.");
+      //   }
+      // });
+    }
+    if (hostname == "vue" && func == "save") {
+      // 用户已确认信息准确，保存数据
+      const { stuID, scores, scoreLen, scoreSum } = data;
+      console.log("已收到确认数据", stuID, scores, scoreLen, scoreSum);
+      // 若save成功，返回给前端确认
+      OCR_MUTEX = "OFF";
+      const _obj = {
+        hostname: "vue",
+        func: "saveOK",
+        data: 0,
+      };
+      ws.send(JSON.stringify(_obj));
+    }
   });
 
   ws.on("close", () => {
