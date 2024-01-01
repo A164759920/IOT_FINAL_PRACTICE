@@ -1,3 +1,3 @@
-.NodeServer/node_modules
-.Python/__pycache__
-..Python/.idea
+NodeServer/node_modules
+Python/__pycache__
+Python/.idea
