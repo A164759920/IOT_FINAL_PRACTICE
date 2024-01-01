@@ -1,0 +1,15 @@
+static_library("distance") {
+    sources = ["main.c"]
+    sources += ["wifi_connecter.c","thread.c","distance.c"]
+    include_dirs = [
+        # "//utils/native/lite/include",
+        # "//kernel/liteos_m/kal",
+        # "//base/iot_hardware/peripheral/interfaces/kits",
+        "//utils/native/lite/include",
+        "//kernel/liteos_m/kal/cmsis",
+        "//device/hisilicon/hispark_pegasus/sdk_liteos/third_party/lwip_sack/include",
+        "//foundation/communication/wifi_lite/interfaces/wifiservice",
+        "//base/iot_hardware/peripheral/interfaces/kits",
+        "//third_party/cJSON",
+    ]
+}

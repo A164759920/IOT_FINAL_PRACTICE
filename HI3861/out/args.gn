@@ -1,0 +1,11 @@
+ohos_build_compiler_specified = "gcc"
+product_path = "/home/dragon/openharmony/1.1.3/vendor/hisilicon/hispark_pegasus"
+device_path =
+    "/home/dragon/openharmony/1.1.3/device/hisilicon/hispark_pegasus/sdk_liteos"
+ohos_kernel_type = "liteos_m"
+disable_huks_binary = false
+disable_authenticate = false
+ohos_build_type = "release"
+ohos_build_time = "1704046279571"
+ohos_build_datetime = "2024-01-01 10:11:19"
+ohos_full_compile = true
