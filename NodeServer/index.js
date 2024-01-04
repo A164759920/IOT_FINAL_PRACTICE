@@ -1,5 +1,4 @@
 /**
- * TODO:
  * - 与HI3861交互
  * - 与Python交互
  * - 与Vue交互
@@ -8,7 +7,6 @@ const PORT = 3000;
 
 const http = require("http");
 const WebSocket = require("ws");
-const fs = require("fs");
 const tencentcloud = require("tencentcloud-sdk-nodejs-ocr");
 
 const { clientConfig } = require("./OCR.js");
@@ -49,6 +47,7 @@ const webSocketServer = new WebSocket.Server({ server: httpServer });
 const connectedClients = new Set();
 
 // 处理 WebSocket 连接
+
 webSocketServer.on("connection", (ws, req) => {
   // 每一个连接的客户端是一个ws，ws的内容可在req中获取
 
@@ -81,33 +80,70 @@ webSocketServer.on("connection", (ws, req) => {
         const params = {
           ImageBase64,
         };
-        // TODO：学号条件判断
         client.GeneralHandwritingOCR(params).then(
           (data) => {
+            // @deprecated 弃用，新增学号匹配
+            // const scores = [];
+            // const over100Scores = [];
+            // let scoreSum = 0;
+            // data.TextDetections.forEach((item) => {
+            //   if (/^\d+$/.test(item.DetectedText)) {
+            //     const score = parseInt(item.DetectedText);
+            //     if (score <= 100) {
+            //       scores.push(score);
+            //       scoreSum = scoreSum + score;
+            //     } else {
+            //       over100Scores.push(score);
+            //     }
+            //   }
+            // });
+            // console.log(scores); // 输出小于等于100的纯数字数组
+            // console.log(over100Scores); // 输出大于100的纯数字数组
+
+            const stuID = new Set();
             const scores = [];
-            const over100Scores = [];
             let scoreSum = 0;
-            console.log(data);
-            data.TextDetections.forEach((item) => {
-              if (/^\d+$/.test(item.DetectedText)) {
-                const score = parseInt(item.DetectedText);
-                if (score <= 100) {
-                  scores.push(score);
-                  scoreSum = scoreSum + score;
+
+            data.TextDetections.forEach((text) => {
+              const detectedText = text.DetectedText.trim();
+              const advancedInfo = JSON.parse(text.AdvancedInfo);
+              if (
+                /^学号：?/.test(detectedText) ||
+                /^学号：?/.test(advancedInfo.Parag)
+              ) {
+                let number;
+                if (/学号：/.test(detectedText)) {
+                  number = parseInt(detectedText.split("：")[1]);
                 } else {
-                  over100Scores.push(score);
+                  number = parseInt(detectedText.replace(/^学号：?/, ""));
+                }
+                if (number > 1000) {
+                  stuID.add(number);
+                } else if (number < 100) {
+                  scoreSum = scoreSum + parseInt(detectedText);
+                  scores.push(detectedText);
+                }
+              } else if (/^\d+$/.test(detectedText)) {
+                const number = parseInt(detectedText);
+                if (number > 1000) {
+                  stuID.add(number);
+                } else if (number < 100) {
+                  scoreSum = scoreSum + parseInt(detectedText);
+                  scores.push(parseInt(detectedText));
                 }
               }
             });
-            console.log(scores); // 输出小于等于100的纯数字数组
-            console.log(over100Scores); // 输出大于100的纯数字数组
+
+            console.log("学号匹配结果", [...stuID][0]);
+            console.log("成绩", scores);
+
             const _obj = {
               hostname,
               func,
               data: {
                 pic: ImageBase64,
                 scores,
-                stuID: over100Scores[0],
+                stuID: [...stuID][0] ? [...stuID][0] : 1000,
                 scoresLen: scores.length,
                 scoreSum,
               },
@@ -123,28 +159,24 @@ webSocketServer.on("connection", (ws, req) => {
       } else {
         console.log("请先确认上一次识别结果...");
       }
-      // // 将 Base64 图片数据转换为 Buffer 对象
-      // const buffer = Buffer.from(imageData, "base64");
-
-      // // 将 Buffer 对象写入本地文件
-
-      // fs.writeFile(`${Date.now()}.jpg`, buffer, (err) => {
-      //   if (err) {
-      //     console.error("Error writing file:", err);
-      //   } else {
-      //     console.log("image.jpg has been saved successfully.");
-      //   }
-      // });
     }
-    if (hostname == "vue" && func == "save") {
-      // 用户已确认信息准确，保存数据
-      const { stuID, scores, scoreLen, scoreSum } = data;
-      console.log("已收到确认数据", stuID, scores, scoreLen, scoreSum);
-      // 若save成功，返回给前端确认
+    if (hostname == "vue") {
+      if (func == "save") {
+        // 用户已确认信息准确，保存数据
+        const { stuID, scores, scoreLen, scoreSum } = data;
+        console.log("已收到确认数据", stuID, scores, scoreLen, scoreSum);
+        // 若save成功，返回给前端确认
+        OCR_MUTEX = "OFF";
+      }
+      if (func == "delete") {
+        // 用户丢弃数据，释放锁
+        console.log("用户已丢弃此次识别数据");
+      }
+      // 发送回显结果
       OCR_MUTEX = "OFF";
       const _obj = {
-        hostname: "vue",
-        func: "saveOK",
+        hostname,
+        func: `${func}OK`,
         data: 0,
       };
       ws.send(JSON.stringify(_obj));
@@ -162,5 +194,5 @@ webSocketServer.on("connection", (ws, req) => {
 
 // 启动服务器
 httpServer.listen(PORT, () => {
-  console.log(`server started on port${PORT}`);
+  console.log(`server started on port：${PORT}`);
 });

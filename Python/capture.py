@@ -89,7 +89,6 @@ async def websocket_receive():
             except websockets.exceptions.ConnectionClosed:
                 # 连接被关闭，退出循环
                 break
-    else:
         asyncio.run(connect())
 
 def video_watcher(video):
@@ -102,8 +101,8 @@ async def connect():
     global GLOBAL_WEBSOCKET
     # ip_address = socket.gethostbyname(socket.gethostname())
     # url = "ws://192.168.44.144:3000"
-    url = "ws://192.168.43.42:3000"
-    # url = "ws://127.0.0.1:3000"
+    # url = "ws://192.168.43.42:3000"
+    url = "ws://127.0.0.1:3000"
     print("ws地址", url)
     async with websockets.connect(url) as websocket:
         print("连接函数执行了")
@@ -138,7 +137,8 @@ def video_capture(video):
             if not ret:
                 print("读取完成")
                 break  # 读取完整个视频后退出循环
-
+                
+                # @deprecated 弃用，从Node端识别
                 # cv2.imshow("Frame", frame)  # 显示当前帧图像
                 ### 分数识别部分的逻辑 ####
                 # IMGNAME = "capture_frame.jpg"
