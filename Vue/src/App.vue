@@ -1,22 +1,16 @@
 <template>
   <div class="app">
-    <!-- <HelloWorld></HelloWorld> -->
-    <!-- <RaspiClient></RaspiClient> -->
     <Capture></Capture>
   </div>
 </template>
 
 <script>
-// import HelloWorld from './components/HelloWorld.vue'
-// import RaspiClient from './components/RaspiClient.vue';
 import Capture from './components/Capture.vue';
 
 
 export default {
   name: 'App',
   components: {
-    // RaspiClient
-    // HelloWorld
     Capture
   }
 }

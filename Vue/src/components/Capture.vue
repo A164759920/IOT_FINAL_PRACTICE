@@ -5,7 +5,10 @@
         <img id="resImg" src="../assets/default.gif" alt="picture" v-else>
 
         <button class="button-84" role="button" @click="connectSocket">开 始 核 分</button>
+        <div class="stuID" v-if="srcVisible">学号：<input v-model="stuID"></div>
+
         <div class="scoreList">
+
             <div class="scoreItem" v-for="(item, index) in scores" :key="index">
                 <div class="itemChild">NO.{{ index + 1 }}</div>
                 <div class="itemChild">
@@ -30,8 +33,9 @@ export default {
         return {
             ws: null,
             timeID: 0,
+            // scores: [11, 12, 13, 14, 15, 16],
             scores: [],
-            scoresLen: 3,
+            scoresLen: 0,
             scoreSum: 0,
             stuID: "1001",
             imgSrc: "../assets/SCORE.jpg",
@@ -47,6 +51,13 @@ export default {
         }
     },
     methods: {
+        // 重置数据
+        resetData: function () {
+            this.scores = [];
+            this.scoresLen = 0;
+            this.scoreSum = 0;
+            this.stuID = "";
+        },
         connectSocket: function () {
             this.ws = new WebSocket(`ws://${window.location.host.split(":")[0]}:3000/`);
             this.wsConnect()
@@ -91,10 +102,18 @@ export default {
                     that.scores = data.scores.slice(0, data.scoresLen + 1)
                     that.scoresLen = data.scoresLen + 1
                     that.scoreSum = data.scoreSum
+                    that.stuID = data.stuID
                     that.$refs.saveInput.focus();
                 }
                 if (hostname == "vue" && func == "saveOK") {
                     alert("保存成功");
+                    that.srcVisible = false
+                    that.resetData()
+                }
+                if (hostname == "vue" && func == "deleteOK") {
+                    alert("取消成功");
+                    that.srcVisible = false
+                    that.resetData()
                 }
             }
             this.ws.onerror = function (evt) {
@@ -104,9 +123,10 @@ export default {
             this.ws.onclose = function (evt) {
                 console.log("已关闭连接", evt)
                 that.cancelKeepAlive()
-                that.WS = null
+                that.ws = null
             }
         },
+
         saveData: function () {
             if (this.ws != null) {
                 const _obj = {
@@ -120,16 +140,20 @@ export default {
                     }
                 }
                 this.ws.send(JSON.stringify(_obj))
-                this.srcVisible = false
             }
         },
+        // 识别失败丢弃数据，并通知后端释放锁
         deleteData: function () {
-            this.scores = [];
-            this.scoresLen = 0;
-            this.scoreSum = 0;
-            this.stuID = "";
-            this.srcVisible = false
+            if (this.ws != null) {
+                const _obj = {
+                    hostname: "vue",
+                    func: "delete",
+                    data: 0
+                }
+                this.ws.send(JSON.stringify(_obj))
+            }
         },
+
         handleSpaceKey() {
             // 处理空格键事件的逻辑
             console.log('空格键被按下');
@@ -177,6 +201,21 @@ export default {
         height: 400px;
         aspect-ratio: 960/720;
 
+    }
+
+    .stuID {
+        font-family: expo-brand-demi, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        font-weight: 550;
+        font-size: 18px;
+    }
+
+    .stuID input {
+        // border: none;
+        width: 80px;
+        background-color: inherit;
+        font-weight: 600;
+        font-size: 18px;
+        text-align: center;
     }
 
     /* CSS */
