@@ -1,0 +1,29 @@
+version: "1.0"
+
+services:
+  node:
+    build:
+      context: ./NodeServer
+      dockerfile: Dockerfile
+    image: mynode:1.0
+    ports:
+      - "3000:3000"
+    container_name: nodeContainer
+
+  vue:
+    build:
+      context: ./Vue
+      dockerfile: Dockerfile
+    image: myvue:1.0
+    ports:
+      - "8080:8080"
+    container_name: vueContainer
+
+  python:
+    build:
+      context: ./Python
+      dockerfile: Dockerfile
+    image: mypython:1.0
+    ports:
+      - "3001:3001"
+    container_name: pythonContainer

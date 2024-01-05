@@ -1,4 +1,4 @@
-asyncio
+asyncio==3.4.3
 flask
 numpy
 opencv-contrib-python-headless==4.5.1.48

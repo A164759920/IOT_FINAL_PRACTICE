@@ -72,7 +72,7 @@ webSocketServer.on("connection", (ws, req) => {
      */
     if (hostname == "python" && func == "result") {
       // 接收到了python的回传数据
-      console.log("来了");
+      console.log("收到python回传图像");
       if (OCR_MUTEX == "OFF") {
         OCR_MUTEX = "ON";
         const client = new OcrClient(clientConfig);
@@ -164,7 +164,7 @@ webSocketServer.on("connection", (ws, req) => {
       if (func == "save") {
         // 用户已确认信息准确，保存数据
         const { stuID, scores, scoreLen, scoreSum } = data;
-        console.log("已收到确认数据", stuID, scores, scoreLen, scoreSum);
+        console.log("已收到确认数据", stuID, scores, scoreSum);
         // 若save成功，返回给前端确认
         OCR_MUTEX = "OFF";
       }
