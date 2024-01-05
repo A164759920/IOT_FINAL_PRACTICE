@@ -3,13 +3,21 @@
  * - 与Python交互
  * - 与Vue交互
  */
-const PORT = 3000;
 
 const http = require("http");
 const WebSocket = require("ws");
 const tencentcloud = require("tencentcloud-sdk-nodejs-ocr");
 
 const { clientConfig } = require("./OCR.js");
+
+const {
+  getAllStudents,
+  addScore,
+  deleteScoreByID,
+} = require("./database/index.js");
+const { SERVER_PORT } = require("./config.default.js");
+const { error } = require("console");
+
 const OcrClient = tencentcloud.ocr.v20181119.Client;
 // 在前端为传感器上锁，防止接口频繁调用
 let OCR_MUTEX = "OFF"; // 取值为ON 或者 OFF
@@ -24,8 +32,8 @@ const httpServer = http.createServer((req, res) => {
     `【http】Client connected from ${clientAddress.split(":")[3]}:${clientPort}`
   );
   if (req.url == "/getDisc") {
+    // // 传感器上报控制指令
     console.log("收到控制帧");
-    // 传感器上报控制指令
     const payload = {
       hostname: "HI3861",
       func: "command",
@@ -34,12 +42,22 @@ const httpServer = http.createServer((req, res) => {
     for (const client of connectedClients) {
       client.send(JSON.stringify(payload));
     }
-    // 设置 HTTP 响应头部
-    res.setHeader("Content-Type", "text/plain");
-    // 设置 HTTP 响应主体内容
-    res.write("Success: getDisc request received and processed.");
-    res.end();
   }
+  // // 测试用
+  // if (req.url == "/del") {
+  //   deleteScoreByID(1001)
+  //     .then((res) => {
+  //       console.log("main-del", res);
+  //     })
+  //     .catch((error) => {
+  //       console.log("main-del", error);
+  //     });
+  // }
+  //设置 HTTP 响应头部
+  res.setHeader("Content-Type", "text/plain");
+  // 设置 HTTP 响应主体内容
+  res.write("Success: getDisc request received and processed.");
+  res.end();
 });
 
 // 创建 WebSocket 服务器
@@ -165,21 +183,36 @@ webSocketServer.on("connection", (ws, req) => {
         // 用户已确认信息准确，保存数据
         const { stuID, scores, scoreLen, scoreSum } = data;
         console.log("已收到确认数据", stuID, scores, scoreSum);
-        // 若save成功，返回给前端确认
-        OCR_MUTEX = "OFF";
+        addScore(stuID, scores, scoreSum)
+          .then((result) => {
+            // 在这里处理写入数据结果
+            console.log("main-add-success");
+            // 发送回显结果
+            OCR_MUTEX = "OFF";
+            const _obj = {
+              hostname,
+              func: `${func}OK`,
+              data: 0,
+            };
+            ws.send(JSON.stringify(_obj));
+          })
+          .catch((error) => {
+            // 在这里处理错误;
+            OCR_MUTEX = "OFF";
+            console.log("main-add-fail", error);
+            const _obj = {
+              hostname,
+              func: `${func}notOK`,
+              data: 0,
+            };
+            ws.send(JSON.stringify(_obj));
+          });
       }
       if (func == "delete") {
         // 用户丢弃数据，释放锁
         console.log("用户已丢弃此次识别数据");
+        OCR_MUTEX = "OFF";
       }
-      // 发送回显结果
-      OCR_MUTEX = "OFF";
-      const _obj = {
-        hostname,
-        func: `${func}OK`,
-        data: 0,
-      };
-      ws.send(JSON.stringify(_obj));
     }
   });
 
@@ -193,6 +226,6 @@ webSocketServer.on("connection", (ws, req) => {
 // 发送消息
 
 // 启动服务器
-httpServer.listen(PORT, () => {
-  console.log(`server started on port：${PORT}`);
+httpServer.listen(SERVER_PORT, () => {
+  console.log(`server started on port：${SERVER_PORT}`);
 });

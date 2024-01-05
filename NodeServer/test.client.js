@@ -1,3 +1,5 @@
+//HI3861模拟测试客户端
+
 const WebSocket = require("ws");
 
 // 创建 WebSocket 客户端
