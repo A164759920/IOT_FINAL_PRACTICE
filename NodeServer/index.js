@@ -91,6 +91,20 @@ webSocketServer.on("connection", (ws, req) => {
     if (hostname == "python" && func == "result") {
       // 接收到了python的回传数据
       console.log("收到python回传图像");
+      const _obj = {
+        hostname,
+        func,
+        data: {
+          pic: ImageBase64,
+          scores,
+          stuID: [...stuID][0] ? [...stuID][0] : 1000,
+          scoresLen: scores.length,
+          scoreSum,
+        },
+      };
+      for (const client of connectedClients) {
+        client.send(JSON.stringify(_obj));
+      }
       if (OCR_MUTEX == "OFF") {
         OCR_MUTEX = "ON";
         const client = new OcrClient(clientConfig);
@@ -100,24 +114,6 @@ webSocketServer.on("connection", (ws, req) => {
         };
         client.GeneralHandwritingOCR(params).then(
           (data) => {
-            // @deprecated 弃用，新增学号匹配
-            // const scores = [];
-            // const over100Scores = [];
-            // let scoreSum = 0;
-            // data.TextDetections.forEach((item) => {
-            //   if (/^\d+$/.test(item.DetectedText)) {
-            //     const score = parseInt(item.DetectedText);
-            //     if (score <= 100) {
-            //       scores.push(score);
-            //       scoreSum = scoreSum + score;
-            //     } else {
-            //       over100Scores.push(score);
-            //     }
-            //   }
-            // });
-            // console.log(scores); // 输出小于等于100的纯数字数组
-            // console.log(over100Scores); // 输出大于100的纯数字数组
-
             const stuID = new Set();
             const scores = [];
             let scoreSum = 0;

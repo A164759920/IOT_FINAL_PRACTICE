@@ -110,6 +110,11 @@ export default {
                     that.srcVisible = false
                     that.resetData()
                 }
+                if (hostname == "vue" && func == "savenotOK") {
+                    alert("❌保存失败,请重试或放弃本次识别结果..");
+                    // that.srcVisible = false
+                    // that.resetData()
+                }
                 if (hostname == "vue" && func == "deleteOK") {
                     alert("取消成功");
                     that.srcVisible = false

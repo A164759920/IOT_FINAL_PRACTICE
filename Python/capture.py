@@ -24,7 +24,7 @@ from flask import Flask
 GLOBAL_CAPTURE_FLAG = False  # 视频捕捉控制
 GLOBAL_SEND_FLAG = False  # 图像截取控制
 GLOBAL_WEBSOCKET = None  # ws客户端控制
-
+EVENT_LOOP = asyncio.new_event_loop() #总事件循环
 
 def createResultJSON(frame):
     # frame_cut = cv2.imread('capture_frame.jpg')   # 读取裁切后的图片作为输出图像
@@ -49,19 +49,7 @@ def createResultJSON(frame):
     return json.dumps(obj)
 
 
-def websocket_send(message):
-    global GLOBAL_WEBSOCKET
-    if GLOBAL_WEBSOCKET is not None:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
 
-        # 运行协程
-        async def run():
-            await GLOBAL_WEBSOCKET.send(message)
-            print("发送消息执行")
-
-        loop.run_until_complete(run())
-        loop.close()
 
 
 def receiveHandler(message):
@@ -94,7 +82,8 @@ async def websocket_receive():
             except websockets.exceptions.ConnectionClosed:
                 # 连接被关闭，退出循环
                 break
-        asyncio.run(connect())
+        await connect()
+
 
 
 def video_watcher(video):
@@ -104,15 +93,22 @@ def video_watcher(video):
     return success
 
 
+def websocket_send(message):
+    global GLOBAL_WEBSOCKET, EVENT_LOOP
+    if GLOBAL_WEBSOCKET is not None:
+        asyncio.run_coroutine_threadsafe(GLOBAL_WEBSOCKET.send(message), EVENT_LOOP)
+        print("发送消息执行")
+
 async def connect():
-    global GLOBAL_WEBSOCKET
+    global GLOBAL_WEBSOCKET,GLOBAL_WEBSOCKET_LOOP
     # ip_address = socket.gethostbyname(socket.gethostname())
     # url = "ws://192.168.44.144:3000"
-    url = "ws://192.168.43.72:3000"
-    # url = "ws://127.0.0.1:3000"
+    # url = "ws://192.168.43.72:3000"
+    url = "ws://192.168.1.22:3000"
     print("ws地址", url)
     async with websockets.connect(url) as websocket:
         print("连接函数执行了")
+        GLOBAL_WEBSOCKET_LOOP = asyncio.get_event_loop()
         GLOBAL_WEBSOCKET = websocket
         obj = {
             "hostname": "python",
@@ -146,26 +142,11 @@ def video_capture(video):
                 print("读取完成")
                 break  # 读取完整个视频后退出循环
 
-                # @deprecated 弃用，从Node端识别
-                # cv2.imshow("Frame", frame)  # 显示当前帧图像
-                ### 分数识别部分的逻辑 ####
-                # IMGNAME = "capture_frame.jpg"
-                # cv2.imwrite(IMGNAME, frame)
-                # operatepicture.f(IMGNAME)
-                # denoising.f()
-                # tonumber.f()
-                # scoreSum, scoresLen, scores = f()
-                # print(scoreSum, scoresLen, scores)
-                # stuID = "1001"
-                ### 分数识别部分的逻辑 ####
-
             if GLOBAL_SEND_FLAG is True:
                 message = createResultJSON(frame)
                 if GLOBAL_WEBSOCKET is not None:
                     websocket_send(message)
                     GLOBAL_SEND_FLAG = False
-            # if cv2.waitKey(1) & 0xFF == ord('q'):
-            #     break
     print('图像处理线程结束..')
 
 
@@ -175,7 +156,7 @@ def video_watcher(video):
     cap = cv2.VideoCapture(video)
     while True:
         ret, _ = cap.read()
-        print("监控视频连接状态...", ret)
+        # print("监控视频连接状态...", ret)
         if ret is False:
             print('[video_watcher]视频连接失败,重新连接...')
             cap.release()
@@ -204,15 +185,15 @@ def run_flask_app():
 
 
 if __name__ == "__main__":
+    asyncio.set_event_loop(EVENT_LOOP)
     flask_thread = threading.Thread(target=run_flask_app)
     flask_thread.start()
 
     # 监控视频连接状态起线程
-    video = "http://admin:admin@192.168.43.1:8081/video"  # 此处@后的ipv4 地址需要改为app提供的地址
+    video = "http://admin:admin@192.168.1.106:8081/video"  # 此处@后的ipv4 地址需要改为app提供的地址
     video_watcher_thread = threading.Thread(target=video_watcher, args=(video,))
     video_watcher_thread.start()
 
     GLOBAL_CAPTURE_FLAG = True
-
-    asyncio.get_event_loop().run_until_complete(connect())
-    video_watcher_thread.join()
+    EVENT_LOOP.run_until_complete(connect())
+    # video_watcher_thread.join()

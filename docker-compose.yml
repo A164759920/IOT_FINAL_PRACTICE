@@ -27,3 +27,5 @@ services:
     ports:
       - "3001:3001"
     container_name: pythonContainer
+    volumes:
+      - ./Python:/app
