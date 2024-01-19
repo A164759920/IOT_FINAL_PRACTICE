@@ -95,4 +95,4 @@
 - 构建镜像：**docker build .**
 - 重命名镜像：**docker tag 容器 id myvue:1.0**
 - 构建容器：**docker run -d -p 0.0.0.0:8080:8080 --name vueContainer myvue:1.0**
-- 查看容器运行情况：**docker ps -a**
+- 查看容器运行情况：**docker ps -a**.

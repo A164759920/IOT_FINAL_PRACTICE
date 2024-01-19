@@ -18,6 +18,7 @@ from numpy import *
 
 import time
 
+import pytesseract
 from flask import Flask
 
 # 全局逻辑总控变量
